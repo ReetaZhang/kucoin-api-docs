@@ -30,6 +30,20 @@ API分为两部分：**REST API和Websocket 实时数据流**
 
 为了您能获取到最新的API 变更的通知，请在 [KuCoin Docs Github](https://github.com/Kucoin/kucoin-api-docs)添加关注【Watch】
 
+**10/09/19**: 
+
+- 废弃 [内部资金划转](#c08ac949fb) 中'/api/v1/accounts/inner-transfer'接口
+- 添加 类型**margin** [账户列表](#f0f7ae469d) 支持杠杆账户查询
+- 添加 [单个账户详情](#7f8d035c7d) 支持杠杆账户查询
+- 添加 类型**margin** [创建账户](#9ec360d41d) 支持杠杆账户创建
+- 添加 [账户流水记录](#c8122540e1) 增加杠杆业务类型
+- 添加 [账户冻结记录](#8092434cb7) 增加杠杆业务类型
+- 添加 [获取单个子账户信息](#db03191132) 支持杠杆账户查询
+- 添加 [获取所有子账户信息](#93f3f96acd) 支持杠杆账户查询
+- 添加 类型**MARGIN** [子母账号资金划转](#108b1a50d2) 支持杠杆账户划转
+- 添加 类型**margin** [内部资金划转](#c08ac949fb) 支持杠杆账户划转
+- 添加 [账户可划转资金](#766919e88c)可获取账户可用于划转的资金
+
 
 **6/19/19**: 
 
@@ -38,7 +52,7 @@ API分为两部分：**REST API和Websocket 实时数据流**
 **6/13/19**: 
 
 - 添加 对接Open API[常见问题](#765f554c38)
-- 添加 [Level-3的优势](#34b637869b).
+- 添加 [Level-3的优势](#34b637869b)
 
 **5/28/19**: 
 
@@ -163,7 +177,7 @@ API分为两部分：**REST API和Websocket 实时数据流**
 [创建账户](#9ec360d41d) | 创建账户
 [账户流水记录](#c8122540e1) | 获取账户流水记录
 [账户冻结记录](#8092434cb7) | 获取账户冻结记录
-[内部资金划转](#c08ac949fb) | 储蓄账户和交易账户资金相互划转
+[内部资金划转](#c08ac949fb) | 储蓄账户、交易账户和杠杆账户资金相互划转
 [下单](#fd6ce2a756) | 下单
 [单个撤单](#fc69531f52) | 取消单个订单
 [全部撤单](#f175a031e7) | 取消所有订单
@@ -279,7 +293,7 @@ REST&nbsp;API 连接地址:
 当请求频率超过限制频率时，系统将返回 **429 Too Many Request** 提示。如果请求次数多次超过频率限制，你的IP或账户会被限制使用，限制时间至少1分钟。请求返回中包含当前类型的剩余请求次数。
 
 
-###REST API
+### REST API
 
 我们通过 **API-KEY** 限制 REST API： **每分钟1800次请求**，一个账号最多可以[创建](#api-key)10个API-KEY。该策略对公共接口和私有接口皆适用。
 
@@ -288,7 +302,7 @@ REST&nbsp;API 连接地址:
 [获取订单列表](#23e02e24af): **每十秒200次请求**（超过会被禁用10秒）
 
 
-###WEBSOCKET
+### WEBSOCKET
 
 
 ### 连接数量
@@ -519,9 +533,9 @@ Key和Secret由KuCoin随机生成并提供，Passphrase是您在创建API时使�
 您可在KuCoin Web端管理API权限。API权限分为以下几类：
 
 * **通用权限** - 允许API访问大部分的GET请求。
-* **交易权限** - 允许API具有下单权限。
-* **转账权限** - 允许API划转资金，包含充值和提现。子账号没有转账权限。
-  授权转账权限时请注意，不需要邮箱验证和谷歌验证就可以使用API进行转账。
+* **交易权限** - 允许API具有交易权限和内部资金划转权限。
+* **提现权限** - 允许API资金充值和提现资金。子账号没有提现权限。
+  授权提现权限时请注意，不需要邮箱验证和谷歌验证就可以使用API进行提现操作。
 
   
 
@@ -650,8 +664,6 @@ KC-API-SIGN = 7QP/oM0ykidMdrfNEUmng8eZjg/ZvPafjIqmxiVfYu4=
 # 用户信息
 ## 获取所有子账号信息
 
-
-
 ```json
 [{
 		"userId": "5cbd31ab9c93e9280cd36a0a",  //subUserId子账号用户ID
@@ -713,7 +725,7 @@ POST /api/v1/accounts
 
 请求参数 | 类型 | 含义
 --------- | ------- | ------- 
-type | String | 账户类型，**main** 或 **trade** 
+type | String | 账户类型，**main**、**trade**或**margin**
 currency | String |[币种](#ebcc9fbb02)
 
 ### 返回值
@@ -727,10 +739,11 @@ id | 账户ID -- accountId
 ## 账户列表
 
 ```json
+
 [{
     "id": "5bd6e9286d99522a52e458de",  //accountId
     "currency": "BTC",  //币种
-    "type": "main",     //该币种下的账户类型，储蓄（main）账户和交易(trade)账户
+    "type": "main",     //账户类型，储蓄（main）账户、交易(trade)账户或杠杆（margin）账户
     "balance": "237582.04299",  //资金总额
     "available": "237582.032",  //可用金额
     "holds": "0.01099". //冻结金额
@@ -757,7 +770,7 @@ id | 账户ID -- accountId
 ### 请求示例
 GET /api/v1/accounts
 
-###API权限
+### API权限
 此接口需要**通用权限**。
 
 
@@ -765,29 +778,34 @@ GET /api/v1/accounts
 
 请求参数 | 类型 | 含义
 --------- | -------| ------- 
-currency | String | [可选] 币种](#ebcc9fbb02)
-type | String |[可选] 账户类型 **main** 或 **trade**
+currency | String | [可选] [币种](#ebcc9fbb02)
+type | String |[可选] 账户类型 **main**、**trade**或**margin**
 
 ### 返回值
 字段 | 含义
 --------- | ------- 
 id | accountId 账户ID 
 currency | 账户对应的币种
-type |账户类型 ，**main**（储蓄账户） or **trade**（交易账户）
+type |账户类型 ，**main**（储蓄账户）、**trade**（交易账户）、**margin**(杠杆账户)
 balance | 账户资金总额 
 available | 账户可用的资金 
 holds | 账户冻结的资金
 
-###账户类型
-单个币种拥有两个账户：1）储蓄账户 2）交易账户。储蓄账户和交易账户之间的资金划转不收取手续费。
+### 账户类型
+账户划分为: 储蓄账户、交易账户和杠杆账户。
+
+账户之间的资金划转不收取手续费。
 
 储蓄账户主要用于资金的提现和充值，储蓄账户里面的资金不可以直接用于交易。交易之前需要将资金从储蓄账户转到交易账户。
 
 交易账户主要用于交易。下单扣除的是交易账户里面的资金，交易账户里面的资金不可以直接提现，必须要转到储蓄账户才可以提现。
 
-储蓄账户和交易账户资金划转请参考[内部资金划转](#c08ac949fb)。
+杠杆账户主要用于借入资产和杠杆交易。
 
-###冻结资金
+
+账户之间资金划转请参考[内部资金划转](#c08ac949fb)。
+
+### 冻结资金
 当下单时，您用于下单的资金会被冻结。冻结的资金不可以用作再次下单或者提现。当订单取消或成交后，资金才能解冻回退或解冻支付。
 
 
@@ -898,12 +916,12 @@ currency | 币种
 amount | 资金变动值
 fee | 充值或提现费率
 balance | 变动后的资金总额
-bizType | 业务类型，比如交易，提现等
+bizType | 业务类型，比如交易，提现，推荐关系奖，借贷等
 direction | 出入账 **out** 或 **in**
 createdAt | 创建时间
 context | 业务核心参数
 
-###context
+### context
 如果 **bizType** 是trade exchange，那么 **context** 字段会包含交易的额外信息（订单id，交易id，交易对）。
 
 
@@ -972,11 +990,11 @@ orderId | 资金冻结订单ID（只用作唯一标识）
 createdAt | 创建时间
 updatedAt | 修改时间
 
-###bizType
+### bizType
 **bizType** 指账户冻结的原因。
 
 
-###orderId
+### orderId
 **orderId** 字段用于下单或提现生成的订单ID，用作唯一标识。
 
 
@@ -991,26 +1009,44 @@ updatedAt | 修改时间
 		"currency": "BTC",
 		"balance": "8",
 		"available": "8",
-		"holds": "0"
+    "holds": "0",
+    "baseCurrency": "BTC",
+    "baseCurrencyPrice": "1",
+    "baseAmount": "1.1"
 	}],
 	"tradeAccounts": [{
 		"currency": "BTC",
 		"balance": "1000",
 		"available": "1000",
-		"holds": "0"
-	}]
+    "holds": "0",
+    "baseCurrency": "BTC",
+    "baseCurrencyPrice": "1",
+    "baseAmount": "1.1"
+
+  }],
+  "marginAccounts": [{
+    "currency": "BTC",
+    "balance": "1.1",
+    "available": "1.1",
+    "holds": "0",
+    "baseCurrency": "BTC",
+    "baseCurrencyPrice": "1",
+    "baseAmount": "1.1"
+  }]
 }
 ```
 
 此接口可获取单个子账号的账户信息。
 
-###HTTP请求
+### HTTP请求
 **GET /api/v1/sub-accounts/{subUserId}**
 
 ### 请求示例
 GET /api/v1/sub-accounts/5caefba7d9575a0688f83c45
 
-
+ 
+### API权限
+此接口需要**通用权限**。
 
 ### 请求参数
 
@@ -1028,54 +1064,63 @@ currency | 币种
 balance | 资金总额
 available | 可用资金
 holds | 冻结资金
- 
-###API权限
-此接口需要**通用权限**。
+baseCurrency | 基准币种
+baseCurrencyPrice | 基准货币价格
+baseAmount | 基准货币数量
+
 
 ## 获取所有子账户信息
 
 
 ```json
-[{
+[
+  {
 		"subUserId": "5caefba7d9575a0688f83c45",
 		"subName": "kucoin1",
 		"mainAccounts": [{
 			"currency": "BTC",
 			"balance": "6",
 			"available": "6",
-			"holds": "0"
+      "holds": "0",
+      "baseCurrency": "BTC",
+      "baseCurrencyPrice": "1",
+      "baseAmount": "1.1"
+
 		}],
 		"tradeAccounts": [{
 			"currency": "BTC",
 			"balance": "1000",
 			"available": "1000",
-			"holds": "0"
-		}]
-	},
-	{
-		"subUserId": "5caf0e2fd9575a0688f83ceb",
-		"subName": "kucoin2",
-		"mainAccounts": [{
-			"currency": "BTC",
-			"balance": "13",
-			"available": "13",
-			"holds": "0"
-		}],
-		"tradeAccounts": []
-	}
+      "holds": "0",
+      "baseCurrency": "BTC",
+      "baseCurrencyPrice": "1",
+      "baseAmount": "1.1"
+    }],
+    "marginAccounts": [{
+        "currency": "BTC",
+        "balance": "1.1",
+        "available": "1.1",
+        "holds": "0",
+        "baseCurrency": "BTC",
+        "baseCurrencyPrice": "1",
+        "baseAmount": "1.1"
+    }]
+  }
 ]
 ```
 
 此接口可获取所有子账号的账户信息。
 
 
-###HTTP请求
+### HTTP请求
 
 **GET /api/v1/sub-accounts**
 
 ### 请求示例
 GET /api/v1/sub-accounts
 
+### API权限
+此接口需要**通用权限**。
 
 ### 返回值
 
@@ -1087,9 +1132,51 @@ currency | 币种
 balance | 资金总额
 available | 可用资金
 holds | 冻结资金
- 
-###API权限
+baseCurrency | 基准币种
+baseCurrencyPrice | 基准货币价格
+baseAmount | 基准货币数量
+
+
+
+## 获取可划转资金
+
+```json
+ {
+    "currency": "KCS",
+    "balance": "0",
+    "available": "0",
+    "holds": "0",
+    "transferable": "0"
+}
+```
+此接口可获取指定账户和币种下的可划转的资金。
+
+### HTTP请求
+**GET /api/v1/accounts/transferable**
+
+### 请求示例
+GET /api/v1/accounts/transferable?currency=BTC&type=MAIN
+
+### API权限
 此接口需要**通用权限**。
+
+### 请求参数
+
+请求参数 | 类型 | 含义
+--------- | ------- |  ------- 
+currency | String | [币种](#ebcc9fbb02)
+type | String |  账户类型**MAIN**、**TRADE** 或 **MARGIN**
+
+
+### 返回值
+字段 | 含义
+--------- | ------- 
+currency | 币种
+balance | 资金总额
+available | 可用资金
+holds | 冻结资金
+transferable | 可划转资金
+
 
 ## 子母账号资金划转
 
@@ -1100,10 +1187,10 @@ holds | 冻结资金
 }
 ```
 此接口，用于子母账号之间资金的划转。
-母账号的储蓄账户支持向子账号的储蓄账户或交易账户划转。
+母账号的储蓄账户支持向子账号的储蓄账户、交易账户或杠杆账户划转。
 
 
-###HTTP请求
+### HTTP请求
 
 **POST /api/v1/accounts/sub-transfer** 
 
@@ -1111,7 +1198,7 @@ holds | 冻结资金
 ### 请求示例
 POST /api/v1/accounts/sub-transfer
 
-###API权限
+### API权限
 此接口需要**交易权限**。
 
 ### 请求参数
@@ -1123,7 +1210,7 @@ currency | String | [币种](#ebcc9fbb02)
 amount | String | 转账金额，为[币种精度](#ebcc9fbb02)正整数倍
 direction | String | OUT — 母账号转子账号<br/>IN — 子账号转母账号
 accountType | String | [可选] 母账号账户类型**MAIN**
-subAccountType | String | 子账号账户类型**MAIN** 或 **TRADE**
+subAccountType | String | 子账号账户类型**MAIN**、**TRADE**或**MARGIN**。
 subUserId | String | [子账号的用户Id](#a0bc1cb873)
 
 ### 返回值
@@ -1134,7 +1221,6 @@ orderId | 子母账号转账的订单ID
  
 
 
-
 ## 内部资金划转
 
 ```json
@@ -1142,50 +1228,15 @@ orderId | 子母账号转账的订单ID
     "orderId": "5bd6e9286d99522a52e458de"
 }
 ```
-
-此接口用于平台内部账户资金划转，用户可以将资金在储蓄账户和交易账户之间免费划转。
-
-
-###划转指南
-
-账户是不会自动创建的（只有当一笔资金充值入账时，储蓄账户才会自动创建）。
-
-储蓄账户和交易账户相互划转指南:
-
-- 首先，按您自己的需求[创建](#9ec360d41d)一个储蓄账户或交易账户；
-- 其次，[获取accountId](#f0f7ae469d)，记录下返回的Id（即accountId)；
-- 最后，调用[内部资金划转](#c08ac949fb)接口，发起转账请求；
-
-
-### HTTP请求
-**POST /api/v1/accounts/inner-transfer**  
-
-<aside class="notice">此接口于2019年08月29日停止使用，请使用下方提供的划转接口。</aside>
-
-
-### 请求示例
-POST /api/v1/accounts/inner-transfer
-
-###API权限
-此接口需要**交易权限**。
-  
-### 请求参数
-
-请求参数 | 类型 | 含义
---------- | ------- |  ------- 
-clientOid | String | Client Order Id，客户端创建的唯一标识，建议使用UUID
-payAccountId | String | 付款方的accountId [账户ID](#f0f7ae469d)
-recAccountId | String | 收款方的accountId [账户ID](#f0f7ae469d)
-amount | String | 转账金额，精度为[币种精度](#ebcc9fbb02)正整数倍
+此接口用于平台内部账户资金划转，用户可以将资金在储蓄账户、交易账户和杠杆账户之间免费划转。
 
 ### HTTP请求
 **POST /api/v2/accounts/inner-transfer**
-<aside class="notice">推荐使用，于2019年06月05日生效。</aside>
 
 ### 请求示例
-POST /api/v2/accounts/sub-transfer
+POST /api/v2/accounts/inner-transfer
 
-###API权限
+### API权限
 此接口需要**交易权限**。
 
 ### 请求参数
@@ -1194,16 +1245,17 @@ POST /api/v2/accounts/sub-transfer
 --------- | ------- |  ------- 
 clientOid | String | Client Order Id，客户端创建的唯一标识，建议使用UUID
 currency | String | [币种](#ebcc9fbb02)
-from | String |  付款账户类型**main** 或 **trade**
-to | String |  收款账户类型**main** 或 **trade**
+from | String |  付款账户类型**main**、**trade** 或 **margin**
+to | String |  收款账户类型**main**、**trade** 或 **margin**
 amount | String | 转账金额，精度为[币种精度](#ebcc9fbb02)正整数倍
-
 
 
 ### 返回值
 字段 | 含义
 --------- | ------- 
 orderId | 内部资金划转的订单ID
+
+
 
 
 
@@ -1229,7 +1281,7 @@ orderId | 内部资金划转的订单ID
 POST /api/v1/deposit-addresses
 
 ### API权限
-此接口需要**转账权限**。
+此接口需要**提现权限**。
 
 ### 请求参数
 
@@ -1596,10 +1648,10 @@ chain | 币种的链名。例如，对于USDT，现有的链有OMNI、ERC20、TR
 <aside class="notice">在WEB端可以开启指定常用地址提现，开启后会校验你的提现地址是否为常用地址。</aside>
 
 ### 请求示例
-GET /api/v1/withdrawals
+POST /api/v1/withdrawals
 
 ###API权限
-此接口需要**转账权限**。
+此接口需要**提现权限**。
 
 ### 请求参数
 
@@ -1635,7 +1687,7 @@ KuCoin支持外扣手续费和内扣手续费。当您的储蓄账户的余额�
 DELETE /api/v1/withdrawals/5bffb63303aa675e8bbe18f9
 
 ###API权限
-此接口需要**转账权限**。
+此接口需要**提现权限**。
 
 ### 请求参数
 
@@ -1851,7 +1903,7 @@ orderId | 订单Id
 此端点可以取消单笔订单。
 
 
-一旦系统收到取消请求，您将收cancelledOrderIds字段。取消请求将由匹配引擎按顺序处理。要知道请求是否已处理，您可以查询订单状态或订阅websocket获取订单消息。
+一旦系统收到取消请求，您将收cancelledOrderIds字段。取消请求将由撮合引擎按顺序处理。要知道请求是否已处理，您可以查询订单状态或订阅websocket获取订单消息。
 
 
 ### HTTP请求
@@ -2919,7 +2971,7 @@ asks | 卖盘
 **GET /api/v1/market/orderbook/level3**
 
 ### 请求示例
-GET GET /api/v1/market/orderbook/level3?symbol=BTC-USDT
+GET /api/v1/market/orderbook/level3?symbol=BTC-USDT
 
 ###请求参数
 
@@ -2973,7 +3025,7 @@ asks | 卖盘
 **GET /api/v1/market/histories**
 
 ### 请求示例
-GET GET /api/v1/market/histories?symbol=BTC-USDT
+GET /api/v1/market/histories?symbol=BTC-USDT
 
 ###请求参数
 
@@ -3192,7 +3244,7 @@ chain | String | [可选] 针对一币多链的币种，可通过chain获取币�
 ###HTTP 请求
 **GET /api/v1/prices**
 
-###Example
+### 请求示例
 GET /api/v1/prices
 
 ###请求参数
@@ -3933,7 +3985,7 @@ Topic: **/market/level3:{symbol},{symbol}...**
 	}
 }
 ```
-当匹配引擎接收到订单指令时，系统将向用户发送确认消息，type为**received**。
+当撮合引擎接收到订单指令时，系统将向用户发送确认消息，type为**received**。
 
 这意味着，订单进入撮合引擎且订单状态为active。一旦撮合引擎收到这个订单信息，无论它是否立即成交，都会向用户发送确认信息。
 
@@ -4167,7 +4219,7 @@ Topic: /market/level3:{symbol},{symbol}...
 }
 ```
 Topic: /market/level3:{symbol},{symbol}...
-触发止盈止损单后，您将收到一条'activate'消息，表示此订单开始进入撮合引擎匹配的生命周期。
+触发止盈止损单后，您将收到一条'activate'消息，表示此订单开始进入撮合引擎的生命周期。
 
 <aside class="spacer4"></aside>
 <aside class="spacer"></aside>

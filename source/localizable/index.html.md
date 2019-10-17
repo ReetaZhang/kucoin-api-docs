@@ -29,6 +29,20 @@ The WebSocket contains two sections: Public Channels and Private Channels
 To get the latest updates in API, you can click ‘Watch’ on our [KuCoin Docs Github](https://github.com/Kucoin/kucoin-api-docs).
 
 
+**10/09/19**: 
+
+- Deprecate '/api/v1/accounts/inner-transfer' endpoint for [Inner Transfer](#inner-transfer).
+- Add the **margin** type for [List Accounts](#list-accounts). 
+- Support the margin account for [Get an Account](#get-an-account).
+- Add the **margin** type for [Create an Account](#create-an-account).
+- Add the extra bizType for margin via [Get Account Ledgers](#get-account-ledgers).
+- Add the extra bizType for margin via [Get Holds](#get-holds) 
+- Add the margin account via [Get Account Balance of a Sub-Account](#get-account-balance-of-a-sub-account)
+- Support the margin account for [Get the Aggregated Balance of all Sub-Accounts](#get-the-aggregated-balance-of-all-sub-accounts)
+- Add the **MARGIN** type for [Transfer between Master user and Sub-user](#transfer-between-master-user-and-sub-user) 
+- Add the **margin** type for [Inner Transfer](#inner-transfer) 
+- Add [Get the Transferable Balance].
+
 **6/19/19**: 
 
 - Modify [Transfer between Master user and Sub-user](#transfer-between-master-user-and-sub-user)
@@ -154,7 +168,7 @@ The API of a sub-account is available to access all the public endpoints. Beside
 
 Endpoints | Description
 ---------- | -------
-[List Accounts](#place-a-new-order) | Get the status of an account.
+[List Accounts](#list-accounts) | Get the status of an account.
 [Get an Account](#get-an-account) | Get the info of an account.
 [Create an Account](#create-an-account) | Create an Account.
 [Get Account Ledgers](#get-account-ledgers) | Get the funds details of an account.
@@ -490,7 +504,7 @@ currentPage | 1 | Current request page.
 pageSize | 50 | Number of results per request.
 
 
-#### Example
+### Example
 **GET /api/v1/orders?currentPage=1&pageSize=50**
 
 
@@ -524,7 +538,7 @@ You can manage the API permission on KuCoin’s official website. The permission
 
 
 * **General** - General - Allows a key general permissions. This includes most of the GET endpoints.
-* **Trade** -  Allows a key to create orders.
+* **Trade** -  Allows a key to create orders and inner transfer funds.
 * **Transfer** -  Allows a key to transfer funds (including deposit and withdrawal). Please note a sub-account is not authorized this permission. Enable with caution - API key transfers WILL BYPASS two-factor authentication.
 
 
@@ -654,7 +668,7 @@ Signature is required for this part.
 
 # User Info
 
-##Get User Info of all Sub-Accounts
+## Get User Info of all Sub-Accounts
 
 ```json
 [{
@@ -680,7 +694,7 @@ You can get the user info of all sub-users via this interface.
 ### Example
 GET /api/v1/sub/user
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"General"** permission.
 
 ### RESPONSES
@@ -695,28 +709,28 @@ remarks | Remark
 
 # Account
 
-##Create an Account
+## Create an Account
 ```json
 {
     "id": "5bd6e9286d99522a52e458de"  //accountId
 }
 ```
 
-###HTTP REQUEST
+### HTTP REQUEST
 **POST /api/v1/accounts**
 
-###Example
+### Example
 POST /api/v1/accounts
 
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"General"** permission.
 
 ### Parameters
 
 Param | Type | Description
 --------- | ------- | ------- 
-type | String | Account type, **main account**  or **trade account** 
+type | String | Account type: **main**, **trade**, **margin**
 currency | String | [Currency](#get-currencies) 
 
 ### RESPONSES
@@ -725,7 +739,7 @@ Field | Description
 id | accountId, ID of an account
 
 
-##List Accounts
+## List Accounts
 
 ```json
 [{
@@ -750,13 +764,13 @@ Get a list of accounts.
 
 Please deposit funds to the main account firstly, then transfer the funds to the trade account via [Inner Transfer](#inner-transfer) before transaction.
 
-###HTTP REQUEST
+### HTTP REQUEST
 **GET /api/v1/accounts**
 
-###Example
+### Example
 GET /api/v1/accounts
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"General"** permission.
 
 ### Parameters
@@ -764,31 +778,35 @@ This endpoint requires the **"General"** permission.
 Param | Type | Description
 --------- | ------- | ------- 
 currency | String | *[Optional]* [Currency](#get-currencies) 
-type | String | *[Optional]* Account type, **main** or **trade** 
+type | String | *[Optional]* Account type: **main**, **trade** or **margin**  
 
 ### RESPONSES
 Field | Description
 --------- | ------- 
 id | The ID of the account 
 currency | Currency
-type | Account type, **main** or **trade** 
+type | Account type: **main**, **trade** or **margin**
 balance | Total funds in the account 
 available | Funds available to withdraw or trade 
 holds | Funds on hold (not available for use) 
 
-###ACCOUNT TYPE
-There are two types of accounts for a currency: 1) **main** account and 2) **trade** account. No fees will be charged for the funds transfer between the main account and trade account.
+### ACCOUNT TYPE
+There are three types of accounts: 1) **main** account 2) **trade** account 3) **margin** account. 
+
+No fees will be charged for the funds transfer between these account.
 
 The main account is used for the storage, withdrawal, and deposit of the funds. The assets in the main account cannot be directly used for trading. To trade cryptos, you need to transfer funds from the main account to the trade account.
 
 The trading account is used for transaction. When you place an order, the system will use the balance of the  trade account. You can’t withdraw funds directly from a trade account. To withdraw the funds, you need to transfer the funds from the trade account to the main account firstly.
 
-###FUNDS ON HOLD
+The margin account is used to borrow assets and leverage transactions.
+
+### FUNDS ON HOLD
 When placing an order, the funds for the order will be freezed. The freezed funds cannot be used for other order placement or withdrawal and will remain on hold until the order is filled or cancelled.
 
 
 
-##Get an Account##
+## Get an Account
 ```json
 {
     "currency": "KCS",  //Currency
@@ -799,13 +817,13 @@ When placing an order, the funds for the order will be freezed. The freezed fund
 ```
 Information for a single account. Use this endpoint when you know the accountId.
 
-###HTTP REQUEST
+### HTTP REQUEST
 **GET /api/v1/accounts/{accountId}**
 
 ### Example
 GET /api/v1/accounts/5bd6e9286d99522a52e458de
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"General"** permission.
 
 
@@ -822,8 +840,6 @@ currency | The currency of the account
 balance | Total funds in the account 
 holds | Funds on hold (not available for use) 
 available | Funds available to withdraw or trade 
-
-
 
 
 
@@ -884,14 +900,14 @@ Items are paginated and sorted to show the latest first. See the [Pagination](#p
 }
 ```
 
-###HTTP REQUEST
+### HTTP REQUEST
 **GET /api/v1/accounts/{accountId}/ledgers**
 
-###Example
+### Example
 GET /api/v1/accounts/5bd6e9286d99522a52e458de/ledgers
 
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"General"** permission.
 
 <aside class="notice">This request is paginated.</aside>
@@ -911,12 +927,12 @@ currency | The currency of an account
 amount | The total amount of assets (fees included) involved in assets changes such as transaction, withdrawal and bonus distribution. 
 fee | Fees generated in transaction, withdrawal, etc.
 balance | Remaining funds after the transaction.
-bizType | Business type leading to the changes in funds, such as exchange, withdrawal, deposit,  KUCOIN_BONUS, REFERRAL_BONUS etc. 
+bizType | Business type leading to the changes in funds, such as exchange, withdrawal, deposit,  KUCOIN_BONUS, REFERRAL_BONUS, Lendings etc. 
 direction | Side, **out** or **in**
 createdAt | Time of the event
 context | Business related information such as order ID, serial No., etc.
 
-###context
+### context
 If the returned value under bizType is **“trade exchange”**, the additional info. (such as order ID and trade ID, trading pair, etc.) of the trade will be returned in field **context**. 
 
 
@@ -952,13 +968,13 @@ If the returned value under bizType is **“trade exchange”**, the additional 
 
 Holds are placed on an account for any active orders or pending withdraw requests. As an order is filled, the hold amount is updated. If an order is canceled, any remaining hold is removed. For a withdraw, once it is completed, the hold is removed.
 
-###HTTP REQUEST
+### HTTP REQUEST
 **GET /api/v1/accounts/{accountId}/holds**
 
-###Example
+### Example
 GET /api/v1/accounts/5bd6e9286d99522a52e458de/holds
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"General"** permission.
 
 <aside class="notice">This request is paginated.</aside>
@@ -976,13 +992,13 @@ Field | Description
 --------- | -------
 currency | currency
 holdAmount | Remaining funds frozen (calculated by subtracting any unfrozen funds from the initial frozen funds))
-bizType | Business type which led to the freezing of the funds, such as transaction, withdrawal etc.
+bizType | Business type which led to the freezing of the funds, such as transaction, withdrawal, lendings etc.
 orderId | ID of funds freezed order (this ID is unique to the frozen asset order) 
 createdAt | Time of the event
 updatedAt | Update time
 
 
-###bizType
+### bizType
 The **bizType** field indicates the reason for the account hold.
 
 ###orderId
@@ -1000,14 +1016,30 @@ The **orderId** field is a unique order ID generated in order placement or withd
 		"currency": "BTC",
 		"balance": "8",
 		"available": "8",
-		"holds": "0"
+    "holds": "0",
+    "baseCurrency": "BTC",
+    "baseCurrencyPrice": "1",
+    "baseAmount": "1.1"
 	}],
 	"tradeAccounts": [{
 		"currency": "BTC",
 		"balance": "1000",
 		"available": "1000",
-		"holds": "0"
-	}]
+    "holds": "0",
+    "baseCurrency": "BTC",
+    "baseCurrencyPrice": "1",
+    "baseAmount": "1.1"
+
+  }],
+  "marginAccounts": [{
+    "currency": "BTC",
+    "balance": "1.1",
+    "available": "1.1",
+    "holds": "0",
+    "baseCurrency": "BTC",
+    "baseCurrencyPrice": "1",
+    "baseAmount": "1.1"
+  }]
 }
 ```
 
@@ -1017,10 +1049,10 @@ This endpoint returns the account info of a sub-user specified by the subUserId.
 
 **GET /api/v1/sub-accounts/{subUserId}**
 
-###Example
+### Example
 GET /api/v1/sub-accounts/5caefba7d9575a0688f83c45
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"General"** permission.
 
 ### Parameters
@@ -1039,52 +1071,61 @@ currency | Currency
 balance | Total funds in an account.
 available | Funds available to withdraw or trade.
 holds | Funds on hold (not available for use).
+baseCurrency | Calculated on this currency.
+baseCurrencyPrice | The base currency price.
+baseAmount | The base currency amount.
  
 
 ## Get the Aggregated Balance of all Sub-Accounts
 
 
 ```json
-[{
+[
+  {
 		"subUserId": "5caefba7d9575a0688f83c45",
 		"subName": "kucoin1",
 		"mainAccounts": [{
 			"currency": "BTC",
 			"balance": "6",
 			"available": "6",
-			"holds": "0"
+      "holds": "0",
+      "baseCurrency": "BTC",
+      "baseCurrencyPrice": "1",
+      "baseAmount": "1.1"
+
 		}],
 		"tradeAccounts": [{
 			"currency": "BTC",
 			"balance": "1000",
 			"available": "1000",
-			"holds": "0"
-		}]
-	},
-	{
-		"subUserId": "5caf0e2fd9575a0688f83ceb",
-		"subName": "kucoin2",
-		"mainAccounts": [{
-			"currency": "BTC",
-			"balance": "13",
-			"available": "13",
-			"holds": "0"
-		}],
-		"tradeAccounts": []
-	}
+      "holds": "0",
+      "baseCurrency": "BTC",
+      "baseCurrencyPrice": "1",
+      "baseAmount": "1.1"
+    }],
+    "marginAccounts": [{
+        "currency": "BTC",
+        "balance": "1.1",
+        "available": "1.1",
+        "holds": "0",
+        "baseCurrency": "BTC",
+        "baseCurrencyPrice": "1",
+        "baseAmount": "1.1"
+    }]
+  }
 ]
 ```
 
 This endpoint returns the account info of all sub-users.
 
-###HTTP REQUEST
+### HTTP REQUEST
 
 **GET /api/v1/sub-accounts**
 
-###Example
+### Example
 GET /api/v1/sub-accounts
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"General"** permission.
 
 ### RESPONSES
@@ -1097,7 +1138,51 @@ currency | The currency of the account.
 balance | Total funds in the account.
 available | Funds available to withdraw or trade.
 holds | Funds on hold (not available for use).
+baseCurrency | Calculated on this currency.
+baseCurrencyPrice | The base currency price.
+baseAmount | The base currency amount.
  
+
+## Get the Transferable Balance
+
+```json
+ {
+    "currency": "KCS",
+    "balance": "0",
+    "available": "0",
+    "holds": "0",
+    "transferable": "0"
+}
+```
+This endpoint returns the transferable balance of a specified account.
+
+
+### HTTP REQUEST
+**GET /api/v1/accounts/transferable**
+
+### Example
+GET /api/v1/accounts/transferable?currency=BTC&type=MAIN
+
+### API KEY PERMISSIONS
+This endpoint requires the **"General"** permission.
+
+### Parameters
+
+Param | Type | Description
+--------- | ------- | ------- 
+currency | String | [currency](#Get-Currencies)
+type | String | The account type: **MAIN**, **TRADE** or **MARGIN**
+
+
+### RESPONSES
+
+Field | Description
+--------- | ------- 
+currency | Currency
+balance | Total funds in an account.
+available | Funds available to withdraw or trade.
+holds | Funds on hold (not available for use).
+transferable | Funds available to transfer.
 
 
 ## Transfer between Master user and Sub-user
@@ -1113,15 +1198,15 @@ This endpoint is used for transferring the assets between the master user and th
 
 
 
-###HTTP REQUEST
+### HTTP REQUEST
 
 **POST /api/v1/accounts/sub-transfer**
 
-###Example
+### Example
 POST /api/v1/accounts/sub-transfer
 
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"Trade"** permission.
 
 ### Parameters
@@ -1133,7 +1218,7 @@ currency | String | [currency](#Get-Currencies)
 amount | String | Transfer amount, the amount is a positive integer multiple of the [currency precision](#get-currencies).
 direction | String | OUT — the master user to sub user<br/>IN — the sub user to the master user.
 accountType | String | *[Optional]* The account type of the master user: **MAIN**
-subAccountType | String | The account type of the sub user: **MAIN** or **TRADE**
+subAccountType | String | The account type of the sub user: **MAIN**, **TRADE** or **MARGIN**
 subUserId | String | the [user ID](#get-user-info-of-all-sub-accounts) of a sub-account.
 
 
@@ -1156,47 +1241,14 @@ orderId | The order ID of a master-sub assets transfer.
 
 The inner transfer interface is used for transferring assets between the accounts of a user and is free of charges. For example, a user could transfer assets from their main account to their trading account on the platform. 
 
-<aside class="notice">The sub-account needs to transfer funds from the main account to the trade account before trading.</aside>
-
-###ASSESTS TRANSFER
-Asset accounts are not automatically generated (when funds are credited, the main account will be created auto). If you need to transfer assets between main account and trade account:
-
-- [Create](#create-an-account) a main or trade account of the currency; 
-- [Get](#list-accounts) the accountId and the id from the response is the accountId;
-- [Transfer](#inner-transfer) assets between main account and trade account.
-
-
-###HTTP REQUEST
-**POST /api/v1/accounts/inner-transfer**
-
-<aside class="notice">This interface was discontinued on August 29, 2019. Please use the transfer interface provided below.</aside>
-
-###Example
-POST /api/v1/accounts/inner-transfer
-
-###API KEY PERMISSIONS
-This endpoint requires the **"Trade"** permission.
-
-### Parameters
-
-Param | Type | Description
---------- | ------- | ------- 
-clientOid | String | Unique order id created by users to identify their orders, e.g. UUID.
-payAccountId | String | [Account ID of payer](#list-accounts).
-recAccountId | String | [Account ID of receiver](#list-accounts). 
-amount | String | Transfer amount, the amount is a positive integer multiple of the [currency precision](#get-currencies).
-
-
 ### HTTP REQUEST
 
 **POST /api/v2/accounts/inner-transfer**
 
-###Example
+### Example
 POST /api/v2/accounts/inner-transfer
 
-<aside class="notice">Recommended for use on June 5, 2019</aside>
-  
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"Trade"** permission.
   
 ### Parameters
@@ -1205,8 +1257,8 @@ Param | Type | Description
 --------- | ------- | ------- 
 clientOid | String | Unique order id created by users to identify their orders, e.g. UUID.
 currency | String | [currency](#Get-Currencies)
-from | String | Account type of payer,  **main** or **trade**
-to | String | Account type of payee, **main** or **trade**
+from | String | Account type of payer: **main**, **trade** or **margin** 
+to | String | Account type of payee: **main**, **trade** or **margin** 
 amount | String | Transfer amount, the amount is a positive integer multiple of the [currency precision](#get-currencies).
 
 
@@ -1234,10 +1286,10 @@ Request via this endpoint to create a deposit address for a currency you intend 
 ###HTTP REQUEST
 **POST /api/v1/deposit-addresses**
 
-###Example
+### Example
 POST /api/v1/deposit-addresses
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"Transfer"** permission.
 
 ### Parameters
@@ -1269,7 +1321,7 @@ Get a deposit address for the currency you intend to deposit. If the returned da
 ###HTTP REQUEST
 **GET /api/v1/deposit-addresses**
 
-###Example
+### Example
 GET /api/v1/deposit-addresses
 
 ### API KEY PERMISSIONS
@@ -1331,7 +1383,7 @@ Items are paginated and sorted to show the latest first. See the [Pagination](#p
 ###HTTP REQUEST
 **GET /api/v1/deposits**
 
-###Example
+### Example
 GET /api/v1/deposits
 
 ### API KEY PERMISSIONS
@@ -1389,7 +1441,7 @@ Request via this endpoint to get the V1 historical deposits list on KuCoin.
 ###HTTP REQUEST
 **GET /api/v1/hist-deposits**
 
-###Example
+### Example
 GET /api/v1/hist-deposits
 
 ### API KEY PERMISSIONS
@@ -1449,7 +1501,7 @@ status | Status
 ###HTTP REQUEST
 **GET /api/v1/withdrawals**
 
-###Example
+### Example
 GET /api/v1/withdrawals
 
 ### API KEY PERMISSIONS
@@ -1510,7 +1562,7 @@ List of KuCoin V1 historical withdrawals.
 ###HTTP REQUEST
 **GET /api/v1/hist-withdrawals**
 
-###Example
+### Example
 GET /api/v1/hist-withdrawals
 
 
@@ -1565,7 +1617,7 @@ status | Status
 ###HTTP REQUEST
 **GET /api/v1/withdrawals/quotas**
 
-###Example
+### Example
 GET /api/v1/withdrawals/quotas?currency=BTC
 
 
@@ -1607,10 +1659,10 @@ chain | The chain name of currency, e.g. The available value for USDT are OMNI, 
 
 <aside class="notice">On the WEB end, you can open the switch of specified favorite addresses for withdrawal, and when it is turned on, it will verify whether your withdrawal address is a favorite address.</aside>
 
-###Example
+### Example
 POST /api/v1/withdrawals
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"Transfer"** permission.
 
 ### Parameters
@@ -1643,10 +1695,10 @@ Only withdrawals requests of **PROCESSING** status could be canceled.
 ###HTTP REQUEST
 **DELETE /api/v1/withdrawals/{withdrawalId}**
 
-###Example
+### Example
 DELETE /api/v1/withdrawals/5bffb63303aa675e8bbe18f9
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"Transfer"** permission.
 
 ### Parameters
@@ -1685,11 +1737,11 @@ The maximum matching orders for a single trading pair in one account is **200** 
 ### HTTP Request
 **POST /api/v1/orders**
 
-###Example
+### Example
 POST /api/v1/orders
 
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"Trade"** permission.
 
 ### Parameters
@@ -1918,10 +1970,10 @@ Request via this endpoint to cancel all open orders. The response is a list of i
 ###HTTP REQUEST
 **DELETE /api/v1/orders**
 
-###Example
+### Example
 **DELETE /api/v1/orders?symbol=ETH-BTC**
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"Trade"** permission.
 
 ### Parameters
@@ -1988,7 +2040,7 @@ Request via this endpoint to get your current order list. Items are paginated an
 ### Example
 GET /api/v1/orders?status=active
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"General"** permission.
 
 <aside class="notice">This request is paginated.</aside>
@@ -2088,7 +2140,7 @@ Items are paginated and sorted to show the latest first. See the [Pagination](#p
 ### Example
 GET /api/v1/hist-orders
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"General"** permission.
 
 <aside class="notice">This request is paginated.</aside>
@@ -2173,7 +2225,7 @@ Items are paginated and sorted to show the latest first. See the [Pagination](#p
 ### Example
 GET /api/v1/limit/orders
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"General"** permission.
 
 
@@ -2258,7 +2310,7 @@ Request via this endpoint to get a single order info by order ID.
 ### Example
 GET /api/v1/orders/5c35c02703aa673ceec2a168
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"General"** permission.
 
 ###PARAMETERS
@@ -2348,7 +2400,7 @@ Items are paginated and sorted to show the latest first. See the [Pagination](#p
 GET /api/v1/fills
 
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"General"** permission.
 
 <aside class="notice">This request is paginated.</aside>
@@ -2492,7 +2544,7 @@ Items are paginated and sorted to show the latest first. See the [Pagination](#p
 GET /api/v1/limit/fills
 
 
-###API KEY PERMISSIONS
+### API KEY PERMISSIONS
 This endpoint requires the **"General"** permission.
 
 ###RESPONSES
@@ -2940,7 +2992,7 @@ In the orderbook, the selling data is sorted low to high by price and orders wit
 **GET /api/v1/market/orderbook/level3**
 
 ### Example
-GET GET /api/v1/market/orderbook/level3?symbol=BTC-USDT
+GET /api/v1/market/orderbook/level3?symbol=BTC-USDT
 
 ###PARAMETERS
 
@@ -3064,7 +3116,7 @@ type | String |Type of candlestick patterns: **1min, 3min, 5min, 15min, 30min, 1
 
 <aside class="notice">For each query, the system would return at most **1500** pieces of data. To obtain more data, please page the data by time.</aside>
 
-###RESPONSES 
+### RESPONSES 
 
 Field |  Description
 --------- | -----------
@@ -3115,7 +3167,7 @@ Request via this endpoint to get the currency list.
 <aside class="notice">Not all currencies currently can be used for trading.</aside>
 
 
-###HTTP REQUEST
+### HTTP REQUEST
 **GET /api/v1/currencies**
 
 ### Example
@@ -3168,7 +3220,7 @@ The "**currency**" of XRB is "XRB", if the "**name**" of XRB is changed into "**
 ```
 Request via this endpoint to get the currency details of a specified currency
 
-###HTTP REQUEST
+### HTTP REQUEST
 **GET /api/v1/currencies/{currency}**
 
 ### Example
@@ -3215,7 +3267,7 @@ Request via this endpoint to get the fiat price of the currencies for the availa
 ###HTTP REQUEST
 **GET /api/v1/prices**
 
-###Example
+### Example
 GET /api/v1/prices
 
 ###PARAMETERS
@@ -3243,7 +3295,7 @@ Get the API server time.
 ### HTTP REQUEST
 **GET /api/v1/timestamp**
 
-###Example
+### Example
 GET /api/v1/timestamp
 
 
