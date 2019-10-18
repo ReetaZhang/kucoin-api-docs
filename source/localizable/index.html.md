@@ -28,6 +28,17 @@ The WebSocket contains two sections: Public Channels and Private Channels
 
 To get the latest updates in API, you can click ‘Watch’ on our [KuCoin Docs Github](https://github.com/Kucoin/kucoin-api-docs).
 
+**10/17/19**: 
+
+- Add the **remark** field to [Get Deposit List](#get-deposit-list) and [Get Withdrawals List](#get-withdrawals-list)
+
+**10/12/19**: 
+
+- Merge [Get Market List](get-market-list) ETH、NEO、TRX three markets into ALTS.
+
+**9/27/19**
+
+- Add **symbolName** response to [Get All Tickers](#get-all-tickers).
 
 **10/09/19**: 
 
@@ -1359,6 +1370,7 @@ chain | The chain name of currency, e.g. The available value for USDT are OMNI, 
 		"isInner": false,
 		"walletTxId": "5bbb57386d99522d9f954c5a@test004",
 		"status": "SUCCESS",
+        "remark": "test",
 		"createdAt": 1544178843000,
 		"updatedAt": 1544178891000
 	}, {
@@ -1370,6 +1382,7 @@ chain | The chain name of currency, e.g. The available value for USDT are OMNI, 
 		"isInner": false,
 		"walletTxId": "5bbb57386d99522d9f954c5a@test003",
 		"status": "SUCCESS",
+        "remark": "test",
 		"createdAt": 1544177654000,
 		"updatedAt": 1544178733000
 	}]
@@ -1411,6 +1424,7 @@ currency | Currency
 isInner | Internal deposit or not
 walletTxId | Wallet Txid
 status | Status
+remark | remark
 createdAt | Creation time of the database record
 updatedAt | Update time of the database record
 
@@ -1488,10 +1502,11 @@ status | Status
 		"memo": "",
 		"currency": "ETH",
 		"amount": 1.0000000,
-        "fee": 0.0100000,
+    "fee": 0.0100000,
 		"walletTxId": "3e2414d82acce78d38be7fe9",
 		"isInner": false,
 		"status": "FAILURE",
+      "remark": "test",
 		"createdAt": 1546503758000,
 		"updatedAt": 1546504603000
 	}]
@@ -1530,6 +1545,7 @@ fee | Withdrawal fee
 walletTxId | Wallet Txid
 isInner | Internal withdrawal or not
 status | status 
+remark | remark
 createdAt | Creation time
 updatedAt | Update time
 
@@ -2699,6 +2715,7 @@ time |  timestamp
     "ticker": [
       {
         "symbol": "BTC-USDT",
+        "symbolName": "BTC-USDT",
         "buy": "0.00001191",
         "sell": "0.00001206",
         "changeRate": "0.057",
@@ -2711,6 +2728,7 @@ time |  timestamp
       },
       {
         "symbol": "BCD-BTC",
+        "symbolName": "BCD-BTC",
         "buy": "0.00018564",
         "sell": "0.0002",
         "changeRate": "-0.0753",
@@ -2727,6 +2745,8 @@ time |  timestamp
 
 Request market tickers for all the trading pairs in the market (including 24h volume).
 
+On the rare occasion that we will change the currency name, if you still want the changed symbol name, you can use the symbolName field instead of the symbol field via “Get all tickers” endpoint.
+
 ###HTTP REQUEST
 **GET /api/v1/market/allTickers**
 
@@ -2735,6 +2755,7 @@ Request market tickers for all the trading pairs in the market (including 24h vo
 Field |  Description
 --------- | -----------
 symbol |  Symbol
+symbolName | Name of trading pairs, it would change after renaming
 buy |   Best bid price
 sell |  Best ask price
 changeRate |  Change rate
@@ -2807,10 +2828,9 @@ time |  timestamp
 {
 	"data":[
     "BTC",
-    "ETH",
     "KCS",
-    "SC",  //SC has been changed to USDS
-    "NEO"
+    "USDS",  //SC has been changed to USDS
+    "ALTS" //ALTS market includes ETH, NEO, TRX
   ]
 }
 ```  
@@ -2818,6 +2838,7 @@ time |  timestamp
 Request via this endpoint to get the transaction currency for the entire trading market.
 
 <aside class="notice">SC has been changed to USDS, but you can still use SC as a query parameter</aside>
+<aside class="notice">The three markets of ETH, NEO and TRX are merged into the ALTS market. You can query the trading pairs of the ETH, NEO and TRX markets through the ALTS trading area.</aside>
 
 ###HTTP REQUEST
 **GET /api/v1/markets**
